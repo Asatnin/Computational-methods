@@ -1,13 +1,26 @@
 function Lab1_Hungarian_alg()
 clc
-c = read_matrix();
+filename = input('Введите название файла с исходными данными: ', 's');
+problem_type = input(['Выберите тип задачи (1 - минимизация, ' ...
+    '2 - максимизация): ']);
+debug = input('Выберите режим работы (1 - итоговый, 2 - отладочный): ');
+c = read_matrix(filename);
 init_c = c;
 n = size(c, 1);
+if problem_type == 2 %максимизация
+    c = -c + max(max(c));
+end
 c = reduce_matrix_columns(c);
 c = reduce_matrix_rows(c);
 [z, k_zeros] = init_independent_sys_zeros(c);
 marked_rows = [];
 need_mark_columns = true;
+
+%номер итерации (для debug-режима)
+it = 0;
+if debug == 2
+    print_cur_iteration(c, z, it);
+end
 
 while k_zeros ~= n
     if need_mark_columns
@@ -36,18 +49,23 @@ while k_zeros ~= n
         marked_rows = [];
         marked_columns = [];
         k_zeros = k_zeros + 1;
+        
+        if debug == 2
+            it = it + 1;
+            print_cur_iteration(c, z, it);
+        end
     end
 end
 print_answer(init_c, z);
 %[z, has_prime_zero, col, row] = mark_prime_zero(c, z, marked_columns, marked_rows)
 end
 
-function c = read_matrix()
+function c = read_matrix(filename)
 %c = [1 2 3 5; 2 5 4 3; 3 4 7 1; 4 3 2 6];
 %c = [1 2 4 5 7; 2 5 3 4 2; 6 8 3 9 1; 5 4 3 2 8; 2 3 2 1 4];
-c = [1 0 5 4; 0 0 0 0; 3 0 6 8; 7 0 5 4];
+%c = [1 0 5 4; 0 0 0 0; 3 0 6 8; 7 0 5 4];
 %c = [9 11 3 6 6; 10 9 11 5 6; 8 10 5 6 4; 6 8 10 4 9; 11 10 9 8 7];
-%c = importdata('input4.txt')
+c = importdata(filename);
 end
 
 function res = reduce_matrix_columns(c)
@@ -181,6 +199,7 @@ while true
     end
     step = step + 1;
 end
+res(res == 2) = 0;
 end
 
 function row = next_vertical(z, col)
@@ -215,7 +234,24 @@ for i = 1:size(c, 1)
         end
     end
 end
-x
+disp(x);
 disp('Значение целевой функции');
-f
+disp(f);
+end
+
+function print_cur_iteration(c, z, it)
+disp(strcat('Итерация #', int2str(it)));
+for i = 1:size(c, 1)
+    fprintf('     ');
+    for j = 1:size(c, 2)
+        if z(i,j) == 0
+            fprintf('%d     ', c(i,j));
+        elseif z(i,j) == 1
+            fprintf('%d*    ', c(i,j));
+        else
+            fprintf('%d''    ', c(i,j));
+        end
+    end
+    fprintf('\n');
+end
 end
