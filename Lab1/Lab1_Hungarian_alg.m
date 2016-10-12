@@ -7,7 +7,7 @@ debug = input('Выберите режим работы (1 - итоговый, 2
 c = read_matrix(filename);
 init_c = c;
 n = size(c, 1);
-if problem_type == 2 %максимизация
+if problem_type == 2 % максимизация
     c = -c + max(max(c));
 end
 c = reduce_matrix_columns(c);
@@ -16,12 +16,13 @@ c = reduce_matrix_rows(c);
 marked_rows = [];
 need_mark_columns = true;
 
-%номер итерации (для debug-режима)
+% номер итерации (для debug-режима)
 it = 0;
 if debug == 2
     print_cur_iteration(c, z, it);
 end
 
+% основной этап венгерского метода
 while k_zeros ~= n
     if need_mark_columns
         marked_columns = mark_columns(z);
@@ -57,14 +58,10 @@ while k_zeros ~= n
     end
 end
 print_answer(init_c, z);
-%[z, has_prime_zero, col, row] = mark_prime_zero(c, z, marked_columns, marked_rows)
 end
 
+% чтение исходных данных из файла
 function c = read_matrix(filename)
-%c = [1 2 3 5; 2 5 4 3; 3 4 7 1; 4 3 2 6];
-%c = [1 2 4 5 7; 2 5 3 4 2; 6 8 3 9 1; 5 4 3 2 8; 2 3 2 1 4];
-%c = [1 0 5 4; 0 0 0 0; 3 0 6 8; 7 0 5 4];
-%c = [9 11 3 6 6; 10 9 11 5 6; 8 10 5 6 4; 6 8 10 4 9; 11 10 9 8 7];
 c = importdata(filename);
 end
 
@@ -82,6 +79,7 @@ end
 res = c;
 end
 
+% построение первоначальной системы независимых нулей
 function [z, k_zeros, marked_columns] = init_independent_sys_zeros(c)
 marked_columns = [];
 k_zeros = 0;
@@ -124,6 +122,7 @@ for j = 1:size(z, 2)
 end
 end
 
+% поиск и пометка нуля среди невыделенных элементов
 function [res, has_prime_zero, col, row] = mark_prime_zero(c, z, ...
     marked_columns, marked_rows)
 col = -1;
@@ -179,6 +178,7 @@ end
 res = c;
 end
 
+% построение L-цепочки
 function res = build_L_chain(z, col, row)
 res = z;
 res(row,col) = 1;
@@ -239,6 +239,7 @@ disp('Значение целевой функции');
 disp(f);
 end
 
+% вывод отладочной информации - СНН на каждом шаге
 function print_cur_iteration(c, z, it)
 disp(strcat('Итерация #', int2str(it)));
 for i = 1:size(c, 1)
