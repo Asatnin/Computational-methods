@@ -1,6 +1,7 @@
 function Lab1_Hungarian_alg()
 clc
-filename = input('Введите название файла с исходными данными: ', 's');
+%filename = input('Введите название файла с исходными данными: ', 's');
+filename = 'input.txt';
 problem_type = input(['Выберите тип задачи (1 - минимизация, ' ...
     '2 - максимизация): ']);
 debug = input('Выберите режим работы (1 - итоговый, 2 - отладочный): ');
@@ -19,18 +20,26 @@ need_mark_columns = true;
 % номер итерации (для debug-режима)
 it = 0;
 if debug == 2
-    print_cur_iteration(c, z, it);
+    %print_init_c(init_c);
+    disp(strcat('Итерация #', int2str(it)));
+    print_after_init_c(c);
+    %disp('Исходная СНН:');
+    print_cur_iteration(c, z);
 end
 
 % основной этап венгерского метода
 while k_zeros ~= n
+    flag = false;
+    h = -1;
+    
     if need_mark_columns
         marked_columns = mark_columns(z);
     end
     [z, has_prime_zero, col, row] = mark_prime_zero(c, z, marked_columns, ...
         marked_rows);
     while ~has_prime_zero
-        c = prepare_prime_zero(c, marked_columns, marked_rows);
+        [c, h] = prepare_prime_zero(c, marked_columns, marked_rows);
+        flag = true;
         [z, has_prime_zero, col, row] = mark_prime_zero(c, z, ...
             marked_columns, marked_rows);
     end
@@ -46,14 +55,21 @@ while k_zeros ~= n
     end
     
     if need_mark_columns
-        z = build_L_chain(z, col, row);
+        prev_z = z;
+        [z, rows, cols] = build_L_chain(z, col, row);
         marked_rows = [];
         marked_columns = [];
         k_zeros = k_zeros + 1;
         
         if debug == 2
             it = it + 1;
-            print_cur_iteration(c, z, it);
+            disp(strcat('Итерация #', int2str(it)));
+            if flag
+                print_new_c(c, h);
+            end
+            print_L_chain(rows, cols);
+            print_cur_iteration2(c, prev_z);
+            print_cur_iteration(c, z);
         end
     end
 end
@@ -149,7 +165,7 @@ res = z;
 has_prime_zero = break_loop;
 end
 
-function res = prepare_prime_zero(c, marked_columns, marked_rows)
+function [res, h_ans] = prepare_prime_zero(c, marked_columns, marked_rows)
 h = 0;
 has_min = false;
 for j = 1:size(c, 2)
@@ -175,11 +191,16 @@ for j = 1:size(c, 2)
     end
 end
 
+h_ans = h;
 res = c;
 end
 
 % построение L-цепочки
-function res = build_L_chain(z, col, row)
+function [res, rows_ans, cols_ans] = build_L_chain(z, col, row)
+rows = [];
+cols = [];
+rows(end + 1) = row;
+cols(end + 1) = col;
 res = z;
 res(row,col) = 1;
 step = 0;
@@ -190,16 +211,22 @@ while true
             break
         end
         res(row,col) = 0;
+        rows(end + 1) = row;
+        cols(end + 1) = col;
     else
         col = next_horizontal(z, row);
         if col == -1
             break
         end
         res(row,col) = 1;
+        rows(end + 1) = row;
+        cols(end + 1) = col;
     end
     step = step + 1;
 end
 res(res == 2) = 0;
+rows_ans = rows;
+cols_ans = cols;
 end
 
 function row = next_vertical(z, col)
@@ -240,8 +267,8 @@ disp(f);
 end
 
 % вывод отладочной информации - СНН на каждом шаге
-function print_cur_iteration(c, z, it)
-disp(strcat('Итерация #', int2str(it)));
+function print_cur_iteration(c, z)
+disp('Текущая СНН:');
 for i = 1:size(c, 1)
     fprintf('     ');
     for j = 1:size(c, 2)
@@ -255,4 +282,64 @@ for i = 1:size(c, 1)
     end
     fprintf('\n');
 end
+fprintf('\n\n');
+end
+
+function print_cur_iteration2(c, z)
+for i = 1:size(c, 1)
+    fprintf('     ');
+    for j = 1:size(c, 2)
+        if z(i,j) == 0
+            fprintf('%d     ', c(i,j));
+        elseif z(i,j) == 1
+            fprintf('%d*    ', c(i,j));
+        else
+            fprintf('%d''    ', c(i,j));
+        end
+    end
+    fprintf('\n');
+end
+fprintf('\n');
+end
+
+function print_new_c(c, h)
+fprintf('h = %d\n', h);
+disp('Преобразованная матрица стоимостей: ');
+for i = 1:size(c, 1)
+    fprintf('     ');
+    for j = 1:size(c, 2)
+        fprintf('%d     ', c(i,j));
+    end
+    fprintf('\n');
+end
+end
+
+function print_init_c(c)
+disp('Исходная матрица стоимостей: ');
+for i = 1:size(c, 1)
+    fprintf('     ');
+    for j = 1:size(c, 2)
+        fprintf('%d     ', c(i,j));
+    end
+    fprintf('\n');
+end
+end
+
+function print_after_init_c(c)
+disp('Преобразованная матрица стоимостей: ');
+for i = 1:size(c, 1)
+    fprintf('     ');
+    for j = 1:size(c, 2)
+        fprintf('%d     ', c(i,j));
+    end
+    fprintf('\n');
+end
+end
+
+function print_L_chain(rows, cols)
+fprintf('Построенная L-цепочка состоит из %d элементов:\n', size(rows, 2));
+for i = 1:(size(rows, 2) - 1)
+    fprintf('(%d, %d) --> ', rows(i), cols(i));
+end
+fprintf('(%d, %d)\n', rows(end), cols(end));
 end
