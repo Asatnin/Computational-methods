@@ -181,7 +181,7 @@ end
 
 for i = 1:size(c, 1)
     if ~ismember(i, marked_rows)
-        c(i,:) = c(i,:) - h;
+c(i,:) = c(i,:) - h;
     end
 end
 
